@@ -118,5 +118,21 @@ describe RSpec::EM::FakeClock do
       (@b - @a).should == 1
     end
   end
+
+  describe :stub do
+    before do
+      @a = @b = nil
+      @a = Time.now + 60
+    end
+
+    it "accepts an optional start-time" do
+      clock.reset
+      clock.stub(@a)
+
+      EM.add_timer(1) { @b = Time.now }
+      clock.tick 2
+      (@b - @a).should == 1
+    end
+  end
 end
 

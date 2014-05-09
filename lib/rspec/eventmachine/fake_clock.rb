@@ -8,8 +8,8 @@ module RSpec::EM
     module API
       STUBBED_METHODS = [:add_timer, :add_periodic_timer, :cancel_timer]
       
-      def self.stub
-        reset
+      def self.stub(start_time = nil)
+        FakeClock.reset(start_time)
         STUBBED_METHODS.each do |method_name|
           RSpec::Mocks.allow_message(EventMachine, method_name, &FakeClock.method(method_name))
         end
@@ -52,8 +52,8 @@ module RSpec::EM
       @call_time
     end
     
-    def self.reset
-      @current_time = Time.now
+    def self.reset(time = nil)
+      @current_time = time || Time.now
       @call_time    = @current_time
       @schedule     = Schedule.new
     end
