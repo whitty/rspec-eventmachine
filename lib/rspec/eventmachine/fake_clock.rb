@@ -1,3 +1,5 @@
+require 'thread'
+
 module RSpec::EM
   module FakeClock
     
@@ -57,35 +59,48 @@ module RSpec::EM
     end
     
     def self.reset(time = nil)
-      @current_time = time || Time.now
-      @call_time    = @current_time
-      @schedule     = Schedule.new
+      @mutex ||= Mutex.new
+      @mutex.synchronize do
+        @current_time = time || Time.now
+        @call_time    = @current_time
+        @schedule     = Schedule.new
+      end
     end
     
     def self.tick(seconds)
-      @current_time += seconds
-      while timeout = @schedule.next_scheduled_at(@current_time)
-        run(timeout)
+      @mutex.synchronize do
+        @current_time += seconds
       end
-      @call_time = @current_time
-    end
-    
-    def self.run(timeout)
-      @call_time = timeout.time
-      timeout.block.call
+      while true
+        timeout = nil
+        @mutex.synchronize do
+          timeout = @schedule.next_scheduled_at(@current_time)
+          break if ! timeout
+          @call_time = timeout.time
+        end
+        break if ! timeout
+        timeout.block.call
       
-      if timeout.repeat
-        timeout.time += timeout.interval
-        @schedule = Schedule.new(@schedule)
-      else
-        clear_timeout(timeout)
+        if timeout.repeat
+          timeout.time += timeout.interval
+          @mutex.synchronize do
+            @schedule = Schedule.new(@schedule)
+          end
+        else
+          clear_timeout(timeout)
+        end
+      end
+      @mutex.synchronize do
+        @call_time = @current_time
       end
     end
     
     def self.timer(block, seconds, repeat)
       timeout = Timeout.new(block, seconds, repeat)
       timeout.time = @call_time + seconds
-      @schedule.add(timeout)
+      @mutex.synchronize do
+        @schedule.add(timeout)
+      end
       timeout
     end
     
@@ -102,7 +117,9 @@ module RSpec::EM
     end
     
     def self.clear_timeout(timeout)
-      @schedule.delete(timeout)
+      @mutex.synchronize do
+        @schedule.delete(timeout)
+      end
     end
     
   end

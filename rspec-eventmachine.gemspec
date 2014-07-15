@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name              = 'rspec-eventmachine'
+  s.name              = 'rspec-eventmachine-threaded'
   s.version           = '0.1.1'
   s.summary           = 'RSpec extensions for testing EventMachine code'
   s.author            = 'James Coglan'
