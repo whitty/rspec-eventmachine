@@ -7,15 +7,19 @@ module RSpec::EM
     
     module API
       STUBBED_METHODS = [:add_timer, :add_periodic_timer, :cancel_timer]
-      
-      def self.stub(start_time = nil)
+
+      def self.stub()
+        stub_with_time(nil)
+      end
+
+      def self.stub_with_time(start_time)
         FakeClock.reset(start_time)
         STUBBED_METHODS.each do |method_name|
           RSpec::Mocks.allow_message(EventMachine, method_name, &FakeClock.method(method_name))
         end
         RSpec::Mocks.allow_message(Time, :now, &FakeClock.method(:now))
       end
-      
+
       def self.reset
         FakeClock.reset
       end

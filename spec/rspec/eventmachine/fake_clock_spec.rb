@@ -119,15 +119,15 @@ describe RSpec::EM::FakeClock do
     end
   end
 
-  describe :stub do
+  describe :stub_with_time do
     before do
       @a = @b = nil
       @a = Time.now + 60
     end
 
-    it "accepts an optional start-time" do
+    it "accepts a start-time" do
       clock.reset
-      clock.stub(@a)
+      clock.stub_with_time(@a)
 
       EM.add_timer(1) { @b = Time.now }
       clock.tick 2
